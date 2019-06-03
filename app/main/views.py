@@ -4,12 +4,12 @@ from ..models import User,Blog,Comment,Subscriber
 from .forms import UpdateProfile,BlogForm,CommentForm,SubscribeForm
 from flask_login import login_required,current_user
 from .. import db,photos
-import requests
+# from .import requests
 import json
 
 @main.route('/')
 def index():
-    random = requests.get('http://quotes.stormconsultancy.co.uk/random.json').json()
+    # random = requests.get('http://quotes.stormconsultancy.co.uk/random.json').json()
 
     news = Blog.get_blogs('News-Blog')
     sports = Blog.get_blogs('Sports-Blog')
@@ -80,7 +80,7 @@ def new_blog():
     return render_template('new_blog.html', title = title, blog_form = blog_form)
 
 @main.route('/blogs/news')
-def sports():
+def news():
     blogs = Blog.get_blogs('News-Blog')
 
     return render_template('news.html',blogs = blogs)
