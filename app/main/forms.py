@@ -6,11 +6,20 @@ class UpdateProfile(FlaskForm):
     bio = TextAreaField('Tell us about you.',validators = [Required()])
     submit = SubmitField('Submit')
 
-class PitchForm(FlaskForm):
-    pitch = TextAreaField('Write Your Pitch',validators=[Required()])
-    pitch_category = SelectField('Pitch Category',choices=[('Technology-Pitch','Technology Pitch'),('Business-Pitch','Business Pitch'),('Interview-Pitch','Interview Pitch'),('Pickup-Line','Pickup-Line Pitch'),('Promotion-Pitch','Promotion Pitch')],validators=[Required()])
-    submit = SubmitField('Submit Pitch')
+class BlogForm(FlaskForm):
+    title = StringField('Blog Title',validators=[Required()])
+    blog_body = TextAreaField('Write Blog Content',validators=[Required()])
+    blog_category = SelectField('Blog Category',choices=[('News-Blog','News'),('Sports-Blog','Sports'),('Travel-Blog','Travel'),('Fitness-Blog','Fitness'),('Fashion-Blog','Fashion'),('Food-Blog','Food'),('Political-Blog','Politics')],validators=[Required()])
+    submit = SubmitField('Submit Blog')
+
 
 class CommentForm(FlaskForm):
-    comment = TextAreaField('Comment about the above Pitch', validators=[Required()])
+    name = StringField('Enter Your Name',validators=[Required()])
+    comment = TextAreaField('Comments', validators=[Required()])
     submit = SubmitField('Submit Comment')
+
+
+class SubscribeForm(FlaskForm):
+    subscriber_name = StringField('Enter your Full Name',validators=[Required()])
+    subscriber_email = StringField('Enter your Email',validators=[Required(),Email()])
+    submit = SubmitField('Subscribe')
