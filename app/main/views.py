@@ -1,16 +1,25 @@
 from flask import render_template,redirect,url_for,request,abort,flash
 from . import main
-from ..models import User,Pitch,Comment
-from .forms import UpdateProfile,PitchForm,CommentForm
+from ..models import User,Blog,Comment,Subscriber
+from .forms import UpdateProfile,BlogForm,CommentForm,SubscribeForm
 from flask_login import login_required,current_user
 from .. import db,photos
+import requests
+import json
 
 @main.route('/')
 def index():
-    '''
-    View root page function that returns the index page and its data
-    '''
-    return render_template('index.html')
+    random = requests.get('http://quotes.stormconsultancy.co.uk/random.json').json()
+
+    news = Blog.get_blogs('News-Blog')
+    sports = Blog.get_blogs('Sports-Blog')
+    travel = Blog.get_blogs('Travel-Blog')
+    fitness = Blog.get_blogs('Fitness-Blog')
+    fashion = Blog.get_blogs('Fashion-Blog')
+    food = Blog.get_blogs('Food-Blog')
+    politics = Blog.get_blogs('Political-Blog')
+
+    return render_template('index.html',news = news, sports = sports, travel = travel, fitness = fitness, fashion = fashion, food = food, random = random)
 
 
 @main.route('/user/<uname>')
@@ -53,57 +62,140 @@ def update_pic(uname):
         db.session.commit()
     return redirect(url_for('main.profile',uname=uname))
 
-@main.route('/pitches', methods = ['GET', 'POST'])
+@main.route('/new-blog', methods = ['GET','POST'])
 @login_required
-def pitches_list():
-    pitch_form = PitchForm()
-    
-    if pitch_form.validate_on_submit():
-        pitch = pitch_form.pitch.data
-        cat = pitch_form.pitch_category.data
+def new_blog():
+    blog_form = BlogForm()
+    if blog_form.validate_on_submit():
+        title = blog_form.title.data
+        blog = blog_form.blog_body.data
+        category = blog_form.blog_category.data
 
-        new_pitch = Pitch(pitch_content=pitch, pitch_category = cat, user = current_user)
-        new_pitch.save_pitch()
+        new_blog = Blog(title = title, content = blog, category = category,user = current_user)
+        new_blog.save_blog()
 
-        return redirect(url_for('main.pitches_list'))
+        return redirect(url_for('main.index'))
 
-    all_pitches = Pitch.get_all_pitches()
+    title = 'New Blog'
+    return render_template('new_blog.html', title = title, blog_form = blog_form)
 
-    title = 'Pitches Page'    
-    return render_template('posts.html', title = title, pitch_form = pitch_form, pitches = all_pitches)
+@main.route('/blogs/news')
+def sports():
+    blogs = Blog.get_blogs('News-Blog')
 
-@main.route('/comments/<int:id>',methods = ['GET','POST'])
-@login_required
-def pitch(id):
-    
-    my_pitch = Pitch.query.get(id)
+    return render_template('news.html',blogs = blogs)
+
+@main.route('/blogs/sports')
+def sports():
+    blogs = Blog.get_blogs('Sports-Blog')
+
+    return render_template('sports.html',blogs = blogs)
+
+@main.route('/blogs/travel')
+def travel():
+    blogs = Blog.get_blogs('Travel-Blog')
+
+    return render_template('travel.html',blogs = blogs)
+
+@main.route('/blogs/fitness')
+def fitness():
+    blogs = Blog.get_blogs('Fitness-Blog')
+
+    return render_template('fitness.html',blogs = blogs)
+
+@main.route('/blogs/fashion')
+def fashion():
+    blogs = Blog.get_blogs('Fashion-Blog')
+
+    return render_template('fashion.html',blogs = blogs)
+
+@main.route('/blogs/food')
+def food():
+    blogs = Blog.get_blogs('Food-Blog')
+
+    return render_template('food.html',blogs = blogs)
+
+@main.route('/blogs/politics')
+def politics():
+    blogs = Blog.get_blogs('Political-Blog')
+
+    return render_template('politics.html',blogs = blogs)
+
+@main.route('/blog/<int:id>', methods = ["GET","POST"])
+def blog(id):
+    blog = Blog.get_blog(id)
+    posted_date = blog.posted.strftime('%b %d, %Y')
+
     comment_form = CommentForm()
-
-    if id is None:
-        abort(404)
-
     if comment_form.validate_on_submit():
-        comment_data = comment_form.comment.data
-        new_comment = Comment(comment_content = comment_data, pitch_id = id, user = current_user)
+
+        name = comment_form.name.data
+        comment = comment_form.comment.data
+
+        new_comment = Comment(name = name, comment = comment, blogit = blog)
         new_comment.save_comment()
 
-        return redirect(url_for('main.pitch',id=id))
+        return redirect(url_for('main.blog',id=id))
+    
+    comments = Comment.get_comments(blog)
+    return render_template('get_blog.html', blog = blog, comment_form = comment_form, comments = comments, date = posted_date)
 
-    all_comments = Comment.get_comments(id)
-
-
-    title = 'Comments Page'
-    return render_template('comments.html',pitch = my_pitch, comment_form = comment_form, comments = all_comments, title = title)
-
-
-@main.route('/like/<int:post_id>/<action>')
+@main.route('/blog/<int:id>/update', methods = ['GET','POST'])
 @login_required
-def like(post_id, action):
-    post = Post.query.filter_by(id=post_id).first_or_404()
-    if action == 'like':
-        current_user.like_post(post)
+def update_blog(id):
+    blog = Blog.get_blog(id)
+    form = BlogForm()
+    if form.validate_on_submit():
+        blog.title = form.title.data
+        blog.content = form.blog_body.data
+        blog.category = form.blog_category.data
         db.session.commit()
-    if action == 'unlike':
-        current_user.unlike_post(post)
+        return redirect(url_for('main.blog', id = id))
+    elif request.method == 'GET':
+        form.title.data = blog.title
+        form.blog_body.data = blog.content
+        form.blog_category.data = blog.category
+    return render_template('new_blog.html', blog_form = form, id=id)
+
+@main.route('/blog/delete/<int:id>', methods = ['GET', 'POST'])
+@login_required
+def delete_blog(id):
+    blog = Blog.get_blog(id)
+    db.session.delete(blog)
+    db.session.commit()
+
+    flash('Blog has been deleted')
+    return redirect(url_for('main.index'))
+    
+    return render_template('get_blog.html', id=id, blog = blog)
+
+@main.route('/blog/comment/delete/<int:id>', methods = ['GET', 'POST'])
+@login_required
+def delete_comment(id):
+    comment = Comment.query.filter_by(id=id).first()
+    blog_id = comment.blog
+    Comment.delete_comment(id)
+
+    flash('Comment has been deleted')
+    return redirect(url_for('main.blog',id=blog_id))
+
+
+@main.route('/blogs/latest', methods = ['GET','POST'])
+def latest_blogs():
+    blogs = Blog.query.order_by(Blog.posted.desc()).all()
+
+    return render_template('latest.html',blogs = blogs)
+
+@main.route('/subscription',methods=['GET','POST'])
+def subscription():
+    subscription_form = SubscribeForm()
+
+    if subscription_form.validate_on_submit():
+        new_subscriber = Subscriber(subscriber_name=subscription_form.subscriber_name.data,subscriber_email=subscription_form.subscriber_email.data)
+
+        db.session.add(new_subscriber)
         db.session.commit()
-return redirect('like',pitch = my_pitch, comment_form = comment_form, comments = all_comments, title = title, like = like)
+
+        return redirect(url_for('main.index'))    
+
+    return render_template('subscription.html',subscription_form = subscription_form)
