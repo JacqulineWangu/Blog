@@ -1,26 +1,24 @@
 from flask import render_template,redirect,url_for,request,abort,flash
 from . import main
-from ..models import User,Blog,Comment,Subscriber
 from .forms import UpdateProfile,BlogForm,CommentForm,SubscribeForm
+from .. import db,photos
+from ..models import User,Blog,Comment,Subscriber
 from flask_login import login_required,current_user
 from .. import db,photos
-# from .import requests
 import json
 
 @main.route('/')
 def index():
-    # random = requests.get('http://quotes.stormconsultancy.co.uk/random.json').json()
+    
 
-    news = Blog.get_blogs('News-Blog')
-    sports = Blog.get_blogs('Sports-Blog')
+    sports = Blog.get_blogs('')
     travel = Blog.get_blogs('Travel-Blog')
     fitness = Blog.get_blogs('Fitness-Blog')
     fashion = Blog.get_blogs('Fashion-Blog')
     food = Blog.get_blogs('Food-Blog')
     politics = Blog.get_blogs('Political-Blog')
 
-    return render_template('index.html',news = news, sports = sports, travel = travel, fitness = fitness, fashion = fashion, food = food, random = random)
-
+    return render_template('index.html', sports = sports, travel = travel, fitness = fitness, fashion = fashion, food = food )
 
 @main.route('/user/<uname>')
 def profile(uname):
@@ -78,12 +76,6 @@ def new_blog():
 
     title = 'New Blog'
     return render_template('new_blog.html', title = title, blog_form = blog_form)
-
-@main.route('/blogs/news')
-def news():
-    blogs = Blog.get_blogs('News-Blog')
-
-    return render_template('news.html',blogs = blogs)
 
 @main.route('/blogs/sports')
 def sports():
