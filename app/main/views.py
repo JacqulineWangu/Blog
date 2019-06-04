@@ -115,7 +115,7 @@ def politics():
 
 @main.route('/blog/<int:id>', methods = ["GET","POST"])
 def blog(id):
-    blog = Blog.get_blog(id)
+    blog = Blog.get_blog(id=id)
     posted_date = blog.posted.strftime('%b %d, %Y')
 
     comment_form = CommentForm()
@@ -124,7 +124,7 @@ def blog(id):
         name = comment_form.name.data
         comment = comment_form.comment.data
 
-        new_comment = Comment(name = name, comment = comment, blogit = blog)
+        new_comment = Comment(name = name, comment = comment, blog = blog)
         new_comment.save_comment()
 
         return redirect(url_for('main.blog',id=id))
