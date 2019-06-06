@@ -47,4 +47,4 @@ In case of any bugs or questions please contact me:
 
 ## License
 
-MIT Copyright (c) {2019} Daniel Montet
+MIT Copyright (c) {2019} Jacquline Wangu
